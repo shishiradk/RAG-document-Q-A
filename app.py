@@ -9,13 +9,17 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains import create_retrieval_chain
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFDirectoryLoader
+from langchain_huggingface import HuggingFaceEmbeddings
 import openai
 
 from dotenv import load_dotenv
 load_dotenv()
 ## load the GROQ API Key
-os.environ['OPENAI_API_KEY']=os.getenv("OPENAI_API_KEY")
+# os.environ['OPENAI_API_KEY']=os.getenv("OPENAI_API_KEY")
 os.environ['GROQ_API_KEY']=os.getenv("GROQ_API_KEY")
+
+os.environ['HF_TOKEN']=os.getenv("HF_TOKEN")
+embeddings=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 groq_api_key=os.getenv("GROQ_API_KEY")
 
@@ -36,7 +40,8 @@ prompt=ChatPromptTemplate.from_template(
 def create_vector_embedding():
     if "vectors" not in st.session_state:
         # st.session_state.embeddings=OpenAIEmbeddings()
-        st.session_state.embeddings=OllamaEmbeddings()
+        # st.session_state.embeddings=OllamaEmbeddings()
+        st.session_state.embeddings=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         st.session_state.loader=PyPDFDirectoryLoader("research_papers") ## Data Ingestion step
         st.session_state.docs=st.session_state.loader.load() ## Document Loading
         st.session_state.text_splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
@@ -69,32 +74,3 @@ if user_prompt:
             st.write(doc.page_content)
             st.write('------------------------')
 
-# st.title("RAG Document Q&A With Groq")
-
-# user_prompt = st.text_input("Enter your query from the research paper")
-
-# if st.button("Document Embedding"):
-#     create_vector_embedding()
-#     st.write("Vector Database is ready")
-
-# if user_prompt:
-#     # Check if vectors are initialized
-#     if "vectors" not in st.session_state:
-#         st.error("Please click 'Document Embedding' first to create the vector database.")
-#     else:
-#         try:
-#             document_chain = create_stuff_documents_chain(llm, prompt)
-#             retriever = st.session_state.vectors.as_retriever()
-#             retrieval_chain = create_retrieval_chain(retriever, document_chain)
-            
-#             start = time.process_time()
-#             response = retrieval_chain.invoke({'input': user_prompt})
-#             st.write(f"Response time: {time.process_time() - start:.2f}s")
-#             st.write(response['answer'])
-
-#             with st.expander("Document Similarity Search"):
-#                 for doc in response['context']:
-#                     st.write(doc.page_content)
-#                     st.write('---')
-#         except Exception as e:
-#             st.error(f"Error: {str(e)}")
